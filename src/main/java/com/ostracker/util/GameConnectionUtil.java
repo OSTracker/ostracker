@@ -77,7 +77,7 @@ public class GameConnectionUtil {
             byte[] bytes = new byte[connection.getContentLength()];
 
             if (stream.read(bytes, 0, bytes.length) == bytes.length) {
-                Buffer buffer = new Buffer(bytes);
+                net.runelite.cache.io.InputStream buffer = new net.runelite.cache.io.InputStream(bytes);
                 buffer.skip(4);
 
                 int worldCount = buffer.readUnsignedShort();
