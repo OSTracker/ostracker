@@ -43,6 +43,8 @@ public class OSTracker {
             remoteCache.shakeHands(GameConnectionUtil.getRevision(worldHost));
             remoteCache.download(cacheStore);
             remoteCache.close();
+
+            cacheStore.close();
         } catch (IOException | InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
