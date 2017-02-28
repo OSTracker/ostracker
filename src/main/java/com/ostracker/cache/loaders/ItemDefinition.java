@@ -5,24 +5,44 @@ import net.runelite.cache.io.InputStream;
 public class ItemDefinition {
 
     public int id;
-    public transient int notedId = -1;
+    public transient int noteId = -1;
     public transient int placeholderId = -1;
+
+    public String name = "null";
+
+    public int storePrice = 1;
 
     /**
      * The item ID for the item that should be displayed behind this item when this item is noted.
      * <p>
      * It is mostly 799, which is a paper-like item.
      */
-    public transient int notedTemplateId = -1;
+    public transient int noteTemplateId = -1;
 
     public transient int placeholderTemplateId = -1;
 
-    public String name = "null";
-    public transient int teamId;
-    public int storePrice = 1;
     public boolean isMembers;
-    public transient int isStackable;
+
+    /**
+     * Holds whether this item will appear in the results when searching for it in the Grand Exchange price checker.
+     */
     public boolean isTradeable;
+
+    /**
+     * Holds whether there can be more than one of this item in one inventory slot or not.
+     * <p>
+     * 0 = not stackable
+     * 1 = stackable
+     */
+    public transient int isStackable;
+
+    /**
+     * Holds which "team" the wearer of this item is in.
+     * <p>
+     * If the local player wears an item with this field set,
+     * other players wearing an item with the same ID will show up as blue dots on the minimap.
+     */
+    public transient int teamId;
 
     public transient String[] groundOptions = new String[]{null, null, "Take", null, null};
     public transient String[] widgetOptions = new String[]{null, null, null, null, "Drop"};
@@ -35,12 +55,15 @@ public class ItemDefinition {
      */
     public transient int shiftClickDropIndex = -2;
 
+    /**
+     * *2d fields describe how the 2D rasterizer should render the inventoryModelId.
+     */
     public transient int zoom2d = 2000;
-    public transient int xan2d;
-    public transient int yan2d;
-    public transient int zan2d;
-    public transient int offsetX2d;
-    public transient int offsetY2d;
+    public transient int xRotation2d;
+    public transient int yRotation2d;
+    public transient int zRotation2d;
+    public transient int xOffset2d;
+    public transient int yOffset2d;
 
     public transient int resizeX = 128;
     public transient int resizeY = 128;
@@ -51,6 +74,8 @@ public class ItemDefinition {
 
     public transient short[] colorToReplace;
     public transient short[] colorToReplaceWith;
+
+    public transient int inventoryModelId;
 
     public transient int maleModel = -1;
     public transient int maleModel2 = -1;
@@ -69,10 +94,14 @@ public class ItemDefinition {
     public transient int contrast;
     public transient int ambient;
 
-    public transient int[] countCo;
-    public transient int[] countObj;
-
-    public transient int inventoryModelId;
+    /**
+     * These arrays contain minimum amounts of an item for the item to transform into another item.
+     * <p>
+     * This is applied on for example coins, where having 1, 2, 3, 100, 1000
+     * and so on amount of coins alters how the stack of coins looks.
+     */
+    public transient int[] transformIds;
+    public transient int[] transformAmounts;
 
     // Unknown fields
     public transient int unknown = -1; // "bw" #135
@@ -102,18 +131,18 @@ public class ItemDefinition {
         } else if (opcode == 4) {
             this.zoom2d = stream.readUnsignedShort();
         } else if (opcode == 5) {
-            this.xan2d = stream.readUnsignedShort();
+            this.xRotation2d = stream.readUnsignedShort();
         } else if (opcode == 6) {
-            this.yan2d = stream.readUnsignedShort();
+            this.yRotation2d = stream.readUnsignedShort();
         } else if (opcode == 7) {
-            this.offsetX2d = stream.readUnsignedShort();
-            if (this.offsetX2d > Short.MAX_VALUE) {
-                this.offsetX2d -= 65536;
+            this.xOffset2d = stream.readUnsignedShort();
+            if (this.xOffset2d > Short.MAX_VALUE) {
+                this.xOffset2d -= 65536;
             }
         } else if (opcode == 8) {
-            this.offsetY2d = stream.readUnsignedShort();
-            if (this.offsetY2d > Short.MAX_VALUE) {
-                this.offsetY2d -= 65536;
+            this.yOffset2d = stream.readUnsignedShort();
+            if (this.yOffset2d > Short.MAX_VALUE) {
+                this.yOffset2d -= 65536;
             }
         } else if (opcode == 11) {
             this.isStackable = 1;
@@ -173,19 +202,19 @@ public class ItemDefinition {
         } else if (opcode == 93) {
             this.femaleHeadModel2 = stream.readUnsignedShort();
         } else if (opcode == 95) {
-            this.zan2d = stream.readUnsignedShort();
+            this.zRotation2d = stream.readUnsignedShort();
         } else if (opcode == 97) {
-            this.notedId = stream.readUnsignedShort();
+            this.noteId = stream.readUnsignedShort();
         } else if (opcode == 98) {
-            this.notedTemplateId = stream.readUnsignedShort();
+            this.noteTemplateId = stream.readUnsignedShort();
         } else if (opcode >= 100 && opcode < 110) {
-            if (null == this.countObj) {
-                this.countObj = new int[10];
-                this.countCo = new int[10];
+            if (null == this.transformIds) {
+                this.transformIds = new int[10];
+                this.transformAmounts = new int[10];
             }
 
-            this.countObj[opcode - 100] = stream.readUnsignedShort();
-            this.countCo[opcode - 100] = stream.readUnsignedShort();
+            this.transformIds[opcode - 100] = stream.readUnsignedShort();
+            this.transformAmounts[opcode - 100] = stream.readUnsignedShort();
         } else if (opcode == 110) {
             this.resizeX = stream.readUnsignedShort();
         } else if (opcode == 111) {
