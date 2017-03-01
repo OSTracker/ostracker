@@ -6,6 +6,7 @@ public class ItemDefinition {
 
     public int id;
     public transient int noteId = -1;
+    public transient int boughtId = -1;
     public transient int placeholderId = -1;
 
     public String name = "null";
@@ -18,6 +19,8 @@ public class ItemDefinition {
      * It is mostly 799, which is a paper-like item.
      */
     public transient int noteTemplateId = -1;
+
+    public transient int boughtTemplateId = -1;
 
     public transient int placeholderTemplateId = -1;
 
@@ -102,10 +105,6 @@ public class ItemDefinition {
      */
     public transient int[] transformIds;
     public transient int[] transformAmounts;
-
-    // Unknown fields
-    public transient int unknown = -1; // "bw" #135
-    public transient int unknown2 = -1; // "bd" #135
 
     public ItemDefinition(int id) {
         this.id = id;
@@ -228,9 +227,9 @@ public class ItemDefinition {
         } else if (opcode == 115) {
             this.teamId = stream.readUnsignedByte();
         } else if (opcode == 139) {
-            this.unknown = stream.readUnsignedShort();
+            this.boughtId = stream.readUnsignedShort();
         } else if (opcode == 140) {
-            this.unknown2 = stream.readUnsignedShort();
+            this.boughtTemplateId = stream.readUnsignedShort();
         } else if (opcode == 148) {
             this.placeholderId = stream.readUnsignedShort();
         } else if (opcode == 149) {
