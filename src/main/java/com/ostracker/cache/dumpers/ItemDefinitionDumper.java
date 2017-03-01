@@ -36,13 +36,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 
-public class ItemDumper {
+public class ItemDefinitionDumper {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ItemDumper.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ItemDefinitionDumper.class);
 
     private File folder;
 
-    public ItemDumper(File folder) {
+    public ItemDefinitionDumper(File folder) {
         this.folder = folder;
 
         if (!folder.exists()) {

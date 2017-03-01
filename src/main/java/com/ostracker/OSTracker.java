@@ -20,7 +20,7 @@
 package com.ostracker;
 
 import com.ostracker.cache.RemoteCache;
-import com.ostracker.cache.dumpers.ItemDumper;
+import com.ostracker.cache.dumpers.ItemDefinitionDumper;
 import com.ostracker.util.GameConnectionUtil;
 import net.runelite.cache.fs.Store;
 
@@ -45,8 +45,8 @@ public class OSTracker {
             remoteCache.download(cacheStore);
             remoteCache.close();
 
-            ItemDumper itemDumper = new ItemDumper(new File("cache-dump/items"));
-            itemDumper.dump(cacheStore);
+            ItemDefinitionDumper itemDefinitionDumper = new ItemDefinitionDumper(new File("cache-dump/itemdefs"));
+            itemDefinitionDumper.dump(cacheStore);
 
             cacheStore.close();
         } catch (IOException | InterruptedException | ExecutionException e) {
