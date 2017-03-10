@@ -55,6 +55,7 @@ public class ItemDefinitionDumper {
     public void dump(Store store) {
         Gson gson = new GsonBuilder()
                 .setPrettyPrinting()
+                .excludeFieldsWithoutExposeAnnotation()
                 .create();
 
         Index index = store.getIndex(IndexType.CONFIGS);

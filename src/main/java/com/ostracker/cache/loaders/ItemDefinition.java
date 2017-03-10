@@ -1,35 +1,36 @@
 package com.ostracker.cache.loaders;
 
+import com.google.gson.annotations.Expose;
 import net.runelite.cache.io.InputStream;
 
 public class ItemDefinition {
 
-    public int id;
-    public transient int noteId = -1;
-    public transient int boughtId = -1;
-    public transient int placeholderId = -1;
+    @Expose public int id;
+    public int noteId = -1;
+    public int boughtId = -1;
+    public int placeholderId = -1;
 
-    public String name = "null";
+    @Expose public String name = "null";
 
-    public int storePrice = 1;
+    @Expose public int storePrice = 1;
 
     /**
      * The item ID for the item that should be displayed behind this item when this item is noted.
      * <p>
      * It is mostly 799, which is a paper-like item.
      */
-    public transient int noteTemplateId = -1;
+    public int noteTemplateId = -1;
 
-    public transient int boughtTemplateId = -1;
+    public int boughtTemplateId = -1;
 
-    public transient int placeholderTemplateId = -1;
+    public int placeholderTemplateId = -1;
 
-    public boolean isMembers;
+    @Expose public boolean isMembers;
 
     /**
      * Holds whether this item will appear in the results when searching for it in the Grand Exchange price checker.
      */
-    public boolean isTradeable;
+    @Expose public boolean isTradeable;
 
     /**
      * Holds whether there can be more than one of this item in one inventory slot or not.
@@ -37,7 +38,7 @@ public class ItemDefinition {
      * 0 = not stackable
      * 1 = stackable
      */
-    public transient int isStackable;
+    public int isStackable;
 
     /**
      * Holds which "team" the wearer of this item is in.
@@ -45,10 +46,10 @@ public class ItemDefinition {
      * If the local player wears an item with this field set,
      * other players wearing an item with the same ID will show up as blue dots on the minimap.
      */
-    public transient int teamId;
+    public int teamId;
 
-    public transient String[] groundOptions = new String[]{null, null, "Take", null, null};
-    public transient String[] widgetOptions = new String[]{null, null, null, null, "Drop"};
+    public String[] groundOptions = new String[]{null, null, "Take", null, null};
+    public String[] widgetOptions = new String[]{null, null, null, null, "Drop"};
 
     /**
      * The index in widgetOptions for the option that should be shown
@@ -56,46 +57,46 @@ public class ItemDefinition {
      * <p>
      * Also determines what action is invoked when shift-clicking on inventory items.
      */
-    public transient int shiftClickDropIndex = -2;
+    public int shiftClickDropIndex = -2;
 
     /**
      * *2d fields describe how the 2D rasterizer should render the inventoryModelId.
      */
-    public transient int zoom2d = 2000;
-    public transient int xRotation2d;
-    public transient int yRotation2d;
-    public transient int zRotation2d;
-    public transient int xOffset2d;
-    public transient int yOffset2d;
+    public int zoom2d = 2000;
+    public int xRotation2d;
+    public int yRotation2d;
+    public int zRotation2d;
+    public int xOffset2d;
+    public int yOffset2d;
 
-    public transient int resizeX = 128;
-    public transient int resizeY = 128;
-    public transient int resizeZ = 128;
+    public int resizeX = 128;
+    public int resizeY = 128;
+    public int resizeZ = 128;
 
-    public transient short[] textureToReplace;
-    public transient short[] textureToReplaceWith;
+    public short[] textureToReplace;
+    public short[] textureToReplaceWith;
 
-    public transient short[] colorToReplace;
-    public transient short[] colorToReplaceWith;
+    public short[] colorToReplace;
+    public short[] colorToReplaceWith;
 
-    public transient int inventoryModelId;
+    public int inventoryModelId;
 
-    public transient int maleModel = -1;
-    public transient int maleModel2 = -1;
-    public transient int maleModel3 = -1;
-    public transient int maleHeadModel = -1;
-    public transient int maleHeadModel2 = -1;
-    public transient int maleOffset;
+    public int maleModel = -1;
+    public int maleModel2 = -1;
+    public int maleModel3 = -1;
+    public int maleHeadModel = -1;
+    public int maleHeadModel2 = -1;
+    public int maleOffset;
 
-    public transient int femaleModel = -1;
-    public transient int femaleModel2 = -1;
-    public transient int femaleModel3 = -1;
-    public transient int femaleHeadModel = -1;
-    public transient int femaleHeadModel2 = -1;
-    public transient int femaleOffset;
+    public int femaleModel = -1;
+    public int femaleModel2 = -1;
+    public int femaleModel3 = -1;
+    public int femaleHeadModel = -1;
+    public int femaleHeadModel2 = -1;
+    public int femaleOffset;
 
-    public transient int contrast;
-    public transient int ambient;
+    public int contrast;
+    public int ambient;
 
     /**
      * These arrays contain minimum amounts of an item for the item to transform into another item.
@@ -103,8 +104,8 @@ public class ItemDefinition {
      * This is applied on for example coins, where having 1, 2, 3, 100, 1000
      * and so on amount of coins alters how the stack of coins looks.
      */
-    public transient int[] transformIds;
-    public transient int[] transformAmounts;
+    public int[] transformIds;
+    public int[] transformAmounts;
 
     public ItemDefinition(int id) {
         this.id = id;
