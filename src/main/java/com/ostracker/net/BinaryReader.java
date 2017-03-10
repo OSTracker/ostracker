@@ -38,11 +38,15 @@ public class BinaryReader {
         return getBuffer(4).readInt();
     }
 
-    public short readShort() throws IOException {
-        return getBuffer(2).readShort();
+    public int readUnsignedShort() throws IOException {
+        return getBuffer(2).readUnsignedShort();
     }
 
-    public int readByte() throws IOException {
+    public byte readByte() throws IOException {
+        return (byte) stream.read();
+    }
+
+    public int readUnsignedByte() throws IOException {
         return stream.read();
     }
 

@@ -59,7 +59,6 @@ import com.ostracker.net.BinaryWriter;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import net.runelite.cache.downloader.FileResult;
-import net.runelite.cache.downloader.requests.FileRequest;
 import net.runelite.cache.fs.Archive;
 import net.runelite.cache.fs.Index;
 import net.runelite.cache.fs.Store;
@@ -190,42 +189,51 @@ public class RemoteCache {
                     LOGGER.info(MessageFormat.format("Archive {0} in index {1} is up to date",
                             archive.getArchiveId(),
                             i));
+
+                    if (oldArchive.getData() != null) {
+                        archive.setData(oldArchive.getData());
+                    } else {
+                        archive.loadContents(oldArchive.saveContents());
+                        archive.setCompression(oldArchive.getCompression());
+                    }
                 }
             }
-
-            index.save();
         }
     }
 
-    private FileResult downloadFile(int index, int fileId)
+    private FileResult downloadFile(int indexId, int fileId)
             throws IOException {
 
-        return downloadFile(index, fileId, true);
+        return downloadFile(indexId, fileId, true);
     }
 
-    private FileResult downloadFile(int index, int fileId, boolean shouldDecompress)
+    private FileResult downloadFile(int indexId, int fileId, boolean shouldDecompress)
             throws IOException {
-
-        FileRequest request = new FileRequest(index, fileId);
 
         ByteBuf buffer = Unpooled.buffer(4);
         // Type
-        buffer.writeByte(request.getIndex() == 255 ? 1 : 0);
+        buffer.writeByte(indexId == 255 ? 1 : 0);
         // Hash
-        buffer.writeMedium(request.getIndex() << 16 | request.getFile());
+        buffer.writeMedium(indexId << 16 | fileId);
 
         writer.write(buffer);
         writer.flush();
 
-        if (index != reader.readByte()) {
-            throw new IllegalStateException("Input index did not match index from response");
+        int remoteIndexId = reader.readUnsignedByte();
+        if (indexId != remoteIndexId) {
+            throw new IllegalStateException("Remote index id "
+                    + remoteIndexId + " did not match input index id "
+                    + indexId);
         }
 
-        if (fileId != reader.readShort()) {
-            throw new IllegalStateException("Input file id did not match file id from response");
+        int remoteFileId = reader.readUnsignedShort();
+        if (fileId != remoteFileId) {
+            throw new IllegalStateException("Remote file id "
+                    + remoteFileId + " did not match input file id "
+                    + fileId);
         }
 
-        FileResult result = downloadCompressedFile(index, fileId);
+        FileResult result = downloadCompressedFile(indexId, fileId);
 
         if (shouldDecompress) {
             result.decompress(null);
@@ -234,12 +242,12 @@ public class RemoteCache {
         return result;
     }
 
-    private FileResult downloadCompressedFile(int index, int fileId)
+    private FileResult downloadCompressedFile(int indexId, int fileId)
             throws IOException {
 
         reader.getStream().mark(5);
 
-        int compressionType = reader.readByte();
+        int compressionType = reader.readUnsignedByte();
         int compressedFileSize = reader.readInt();
 
         reader.getStream().reset();
@@ -269,10 +277,10 @@ public class RemoteCache {
 
             LOGGER.trace(MessageFormat.format(
                     "{0} {1} - read block {2}/{3}, bytes in this block: {4}, file status: {5}/{6}",
-                    index, fileId, i, breakCount, bytesInBlock, compressedDataOffset, dataSize));
+                    indexId, fileId, i, breakCount, bytesInBlock, compressedDataOffset, dataSize));
 
             if (i < breakCount) {
-                int b = reader.readByte();
+                int b = reader.readUnsignedByte();
                 if (b != 0xFF) {
                     throw new IllegalStateException("First byte of all chunks except the first one should be 0xFF, was "
                             + b);
@@ -285,7 +293,7 @@ public class RemoteCache {
             throw new IllegalStateException("Found data size did not match expected size");
         }
 
-        return new FileResult(index, fileId, compressedData);
+        return new FileResult(indexId, fileId, compressedData);
     }
 
     /** Calculate how many breaks there are in the file stream.
