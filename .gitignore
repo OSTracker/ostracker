@@ -18,5 +18,5 @@
 hs_err_pid*
 
 # Generated files/folders
-/cache
-/cache-dump
+/cachestore
+/web
