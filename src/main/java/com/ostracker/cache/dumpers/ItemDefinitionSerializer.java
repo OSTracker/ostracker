@@ -28,7 +28,6 @@ import com.ostracker.cache.loaders.ItemFileLoader;
 import net.runelite.cache.definitions.ItemDefinition;
 import net.runelite.cache.definitions.loaders.ItemLoader;
 import net.runelite.cache.fs.File;
-import net.runelite.cache.io.InputStream;
 
 import java.io.FileWriter;
 import java.io.IOException;
