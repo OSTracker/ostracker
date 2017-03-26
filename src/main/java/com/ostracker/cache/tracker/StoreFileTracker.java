@@ -35,14 +35,35 @@ public class StoreFileTracker {
 
     public void load(Store store) {
         for (Index index : store.getIndexes()) {
-            for (Archive archive : index.getArchives()) {
-                int hash = index.getId() << 16 | archive.getArchiveId();
+            List<Archive> archives = index.getArchives();
 
-                files.put(hash, archive
-                        .getFiles()
-                        .stream()
-                        .map(StoreFile::new)
-                        .collect(Collectors.toList()));
+            boolean singleFileArchives = true;
+
+            for (Archive archive : archives) {
+                if (archive.getFiles().size() != 1) {
+                    singleFileArchives = false;
+                    break;
+                }
+            }
+
+            if (singleFileArchives) {
+                List<StoreFile> archiveFiles = new ArrayList<>();
+
+                archives.forEach(a -> archiveFiles.add(new StoreFile(a.getFiles().get(0), a)));
+
+                files.put(index.getId() << 16, archiveFiles);
+            } else {
+                for (Archive archive : archives) {
+                    List<StoreFile> archiveFiles = archive
+                            .getFiles()
+                            .stream()
+                            .map(f -> new StoreFile(f, archive))
+                            .collect(Collectors.toList());
+
+                    int hash = index.getId() << 16 | archive.getArchiveId();
+
+                    files.put(hash, archiveFiles);
+                }
             }
         }
     }

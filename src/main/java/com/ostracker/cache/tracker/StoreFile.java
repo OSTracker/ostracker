@@ -19,6 +19,7 @@
 
 package com.ostracker.cache.tracker;
 
+import net.runelite.cache.fs.Archive;
 import net.runelite.cache.fs.File;
 
 import java.util.Arrays;
@@ -26,17 +27,23 @@ import java.util.Arrays;
 public class StoreFile {
 
     private int id;
+    private int archiveId;
     private int hash;
     private byte[] data;
 
-    public StoreFile(File file) {
+    public StoreFile(File file, Archive archive) {
         this.id = file.getFileId();
+        this.archiveId = archive.getArchiveId();
         this.hash = file.getNameHash();
         this.data = file.getContents();
     }
 
     public int getId() {
         return id;
+    }
+
+    public int getArchiveId() {
+        return archiveId;
     }
 
     public int getHash() {
@@ -52,16 +59,18 @@ public class StoreFile {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        StoreFile file = (StoreFile) o;
+        StoreFile storeFile = (StoreFile) o;
 
-        return id == file.id
-                && hash == file.hash
-                && Arrays.equals(data, file.data);
+        return id == storeFile.id
+                && archiveId == storeFile.archiveId
+                && hash == storeFile.hash
+                && Arrays.equals(data, storeFile.data);
     }
 
     @Override
     public int hashCode() {
         int result = id;
+        result = 31 * result + archiveId;
         result = 31 * result + hash;
         result = 31 * result + Arrays.hashCode(data);
         return result;
