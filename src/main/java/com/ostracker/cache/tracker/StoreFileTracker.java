@@ -84,13 +84,13 @@ public class StoreFileTracker {
         List<StoreFile> files = tracker.getFiles(indexId, archiveId);
         List<StoreFile> files2 = tracker2.getFiles(indexId, archiveId);
 
-        if (files.size() <= files2.size()) {
+        if (files.size() >= files2.size()) {
             return new ArrayList<>();
         }
 
         List<StoreFile> addedFiles = new ArrayList<>();
 
-        for (int i = files.size() - 1; i < files2.size(); i++) {
+        for (int i = files.size(); i < files2.size(); i++) {
             addedFiles.add(files2.get(i));
         }
 
