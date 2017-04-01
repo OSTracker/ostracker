@@ -25,6 +25,7 @@ import com.ostracker.cache.dumpers.SpriteDumper;
 import com.ostracker.cache.loaders.ItemFileLoader;
 import com.ostracker.cache.loaders.ModelFileLoader;
 import com.ostracker.cache.tracker.ItemDefinitionTracker;
+import com.ostracker.cache.tracker.ModelDefinitionTracker;
 import com.ostracker.cache.tracker.StoreFileTracker;
 import com.ostracker.util.CacheStoreUtil;
 import com.ostracker.util.FileUtil;
@@ -109,24 +110,29 @@ public class OSTracker {
             int cacheVersion = CacheStoreUtil
                     .getCacheVersion(cacheStore);
 
+            StoreFileTracker newFileTracker = new StoreFileTracker();
+            newFileTracker.load(cacheStore);
+
+            Map<String, JsonObject> changeLogParts = new HashMap<>();
+
+            // Dump item definitions for items that have changed
+            ItemFileLoader itemFileLoader = new ItemFileLoader(cacheStore);
+
+            ItemDefinitionTracker itemDefinitionTracker = new ItemDefinitionTracker(itemFileLoader);
+            changeLogParts.put("items", itemDefinitionTracker.run(fileTracker, newFileTracker));
+
+            // Dump models that have changed
             ModelFileLoader modelFileLoader = new ModelFileLoader(cacheStore);
 
+            ModelDefinitionTracker modelDefinitionTracker = new ModelDefinitionTracker(modelFileLoader);
+            changeLogParts.put("models", modelDefinitionTracker.run(fileTracker, newFileTracker));
+
+            // Dump sprites
             SpriteDumper spriteDumper = new SpriteDumper(modelFileLoader);
 
             for (Integer spriteId : modelFileLoader.getSpriteFiles().keySet()) {
                 spriteDumper.dump(spriteId);
             }
-
-            StoreFileTracker newFileTracker = new StoreFileTracker();
-            newFileTracker.load(cacheStore);
-
-            ItemFileLoader itemFileLoader = new ItemFileLoader(cacheStore);
-
-            Map<String, JsonObject> changeLogParts = new HashMap<>();
-
-            // Dump item definitions for items that have changed
-            ItemDefinitionTracker itemDefinitionTracker = new ItemDefinitionTracker(itemFileLoader);
-            changeLogParts.put("items", itemDefinitionTracker.run(fileTracker, newFileTracker));
 
             dumpVersionFile(cacheVersion, changeLogParts);
             updateVersionsFile(cacheVersion);
