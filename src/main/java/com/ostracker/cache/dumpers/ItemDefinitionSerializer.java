@@ -48,6 +48,16 @@ public class ItemDefinitionSerializer {
         fieldNameMappings.put("options", "groundOptions");
         fieldNameMappings.put("interfaceOptions", "widgetOptions");
         fieldNameMappings.put("inventoryModel", "inventoryModelId");
+        fieldNameMappings.put("colorFind", "colorToReplace");
+        fieldNameMappings.put("colorReplace", "colorToReplaceWith");
+        fieldNameMappings.put("textureFind", "textureToReplace");
+        fieldNameMappings.put("textureReplace", "textureToReplaceWith");
+        fieldNameMappings.put("maleModel0", "maleModel");
+        fieldNameMappings.put("maleModel1", "maleModel2");
+        fieldNameMappings.put("maleModel2", "maleModel3");
+        fieldNameMappings.put("femaleModel0", "femaleModel");
+        fieldNameMappings.put("femaleModel1", "femaleModel2");
+        fieldNameMappings.put("femaleModel2", "femaleModel3");
 
         Set<String> fieldsToSerialize = new HashSet<>();
         fieldsToSerialize.addAll(fieldNameMappings.keySet());
@@ -57,6 +67,16 @@ public class ItemDefinitionSerializer {
         fieldsToSerialize.add("boughtTemplateId");
         fieldsToSerialize.add("placeholderId");
         fieldsToSerialize.add("placeholderTemplateId");
+        fieldsToSerialize.add("xan2d");
+        fieldsToSerialize.add("yan2d");
+        fieldsToSerialize.add("zan2d");
+        fieldsToSerialize.add("zoom2d");
+        fieldsToSerialize.add("maleOffset");
+        fieldsToSerialize.add("femaleOffset");
+        fieldsToSerialize.add("maleHeadModel");
+        fieldsToSerialize.add("maleHeadModel2");
+        fieldsToSerialize.add("femaleHeadModel");
+        fieldsToSerialize.add("femaleHeadModel2");
 
         GSON = new GsonBuilder()
                 .setPrettyPrinting()
