@@ -54,43 +54,81 @@ public class ItemRasterizer {
     }
 
     public BufferedImage rasterize(int itemId) {
-        ItemDefinition definition = itemLoader.load(itemId, itemFiles.get(itemId).getContents());
+        ItemDefinition definition = getItemDefinitionForId(itemId);
 
-        if (definition.notedTemplate == -1
-                && definition.placeholderTemplateId == -1
+        if (definition.placeholderTemplateId == -1
                 && definition.boughtTemplateId == -1) {
 
-            net.runelite.cache.fs.File modelFile = modelIndex
-                    .getArchive(definition.inventoryModel)
-                    .getFiles()
-                    .get(0);
+            SpritePixels sprite = createItemSprite(definition, false, true);
 
-            if (modelFile.getContents().length > 0) {
-                return rasterize(definition, new ModelData(modelFile.getContents()));
+            if (sprite != null) {
+                try {
+                    BufferedImage image = new BufferedImage(sprite.width, sprite.height, BufferedImage.TYPE_INT_ARGB);
+                    for (int i = 0; i < sprite.width; ++i) {
+                        for (int j = 0; j < sprite.height; ++j) {
+                            int pixel = sprite.image[j * sprite.width + i];
+                            if ((pixel & 0xFF000000) == 0 && (pixel & 0xFFFFFF) != 0) {
+                                pixel |= 0xFF000000;
+                            }
+                            image.setRGB(i, j, pixel);
+                        }
+                    }
+
+                    return image;
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
 
         return null;
     }
 
-    private BufferedImage rasterize(ItemDefinition itemDefinition, ModelData modelDefinition) {
+    private SpritePixels createItemSprite(ItemDefinition itemDefinition, boolean zoomOut, boolean addOutline) {
+        ModelData modelData = getModelDataForId(itemDefinition.inventoryModel);
+
+        SpritePixels underlayPixels = null;
+
+        if (itemDefinition.notedTemplate != -1) {
+            underlayPixels = createItemSprite(getItemDefinitionForId(itemDefinition.notedID),
+                    true, true);
+
+            if (underlayPixels == null) {
+                return null;
+            }
+        } else if (itemDefinition.boughtTemplateId != -1) {
+            underlayPixels = createItemSprite(getItemDefinitionForId(itemDefinition.boughtId),
+                    false, addOutline);
+
+            if (underlayPixels == null) {
+                return null;
+            }
+        } else if (itemDefinition.placeholderTemplateId != -1) {
+            underlayPixels = createItemSprite(getItemDefinitionForId(itemDefinition.placeholderId),
+                    false, false);
+
+            if (underlayPixels == null) {
+                return null;
+            }
+        }
+
         if(itemDefinition.resizeX != 128 || itemDefinition.resizeY != 128 || itemDefinition.resizeZ != 128) {
-            modelDefinition.method1562(itemDefinition.resizeX, itemDefinition.resizeY, itemDefinition.resizeZ);
+            modelData.method1562(itemDefinition.resizeX, itemDefinition.resizeY, itemDefinition.resizeZ);
         }
 
         if(null != itemDefinition.colorFind) {
             for(int var4 = 0; var4 < itemDefinition.colorFind.length; ++var4) {
-                modelDefinition.method1617(itemDefinition.colorFind[var4], itemDefinition.colorReplace[var4]);
+                modelData.method1617(itemDefinition.colorFind[var4], itemDefinition.colorReplace[var4]);
             }
         }
 
         if(null != itemDefinition.textureFind) {
             for(int var4 = 0; var4 < itemDefinition.textureFind.length; ++var4) {
-                modelDefinition.method1612(itemDefinition.textureFind[var4], itemDefinition.textureReplace[var4]);
+                modelData.method1612(itemDefinition.textureFind[var4], itemDefinition.textureReplace[var4]);
             }
         }
 
-        Model model = modelDefinition.method1624(itemDefinition.ambient + 64,
+        Model model = modelData.method1624(itemDefinition.ambient + 64,
                 768 + itemDefinition.contrast,
                 -50, -10, -50);
         model.field1388 = true;
@@ -102,15 +140,22 @@ public class ItemRasterizer {
         int[] var15 = new int[4];
         Rasterizer2D.method4015(var15);
 
-        SpritePixels var8 = new SpritePixels(WIDTH, HEIGHT);
-        Rasterizer2D.setRasterBuffer(var8.image, WIDTH, HEIGHT);
+        SpritePixels spritePixels = new SpritePixels(WIDTH, HEIGHT);
+        Rasterizer2D.setRasterBuffer(spritePixels.image, WIDTH, HEIGHT);
         Rasterizer2D.method4017();
 
         Rasterizer3D.method1747();
-        Rasterizer3D.method1726(var8.width / 2, var8.height / 2);
+        Rasterizer3D.method1726(spritePixels.width / 2, spritePixels.height / 2);
         Rasterizer3D.rasterGouraudLowRes = false;
 
+        if (itemDefinition.placeholderTemplateId != -1) {
+            underlayPixels.method4174(0, 0);
+        }
+
         int zoom = itemDefinition.zoom2d;
+        if(zoomOut) {
+            zoom = (int)((double)zoom * 1.5D);
+        }
 
         int var17 = Rasterizer3D.field1460[itemDefinition.xan2d] * zoom >> 16;
         int var18 = Rasterizer3D.field1446[itemDefinition.xan2d] * zoom >> 16;
@@ -120,31 +165,133 @@ public class ItemRasterizer {
                 itemDefinition.xOffset2d, itemDefinition.yOffset2d + model.modelHeight / 2 + var17,
                 itemDefinition.yOffset2d + var18);
 
-        // Adds black outline
-        var8.method4222(1);
+        if (itemDefinition.boughtTemplateId != -1) {
+            underlayPixels.method4174(0, 0);
+        }
 
-        Rasterizer2D.setRasterBuffer(var8.image, WIDTH, HEIGHT);
+        if (addOutline) {
+            spritePixels.method4222(1);
+        }
+
+        Rasterizer2D.setRasterBuffer(spritePixels.image, WIDTH, HEIGHT);
+
+        if (itemDefinition.notedTemplate != -1) {
+            underlayPixels.method4174(0, 0);
+        }
 
         Rasterizer2D.setRasterBuffer(var12, var13, var14);
         Rasterizer2D.method4016(var15);
         Rasterizer3D.method1747();
         Rasterizer3D.rasterGouraudLowRes = true;
 
-        try {
-            BufferedImage image = new BufferedImage(var8.width, var8.height, BufferedImage.TYPE_INT_ARGB);
-            for (int i = 0; i < var8.width; ++i) {
-                for (int j = 0; j < var8.height; ++j) {
-                    int pixel = var8.image[j * var8.width + i];
-                    if ((pixel & 0xFF000000) == 0 && (pixel & 0xFFFFFF) != 0) {
-                        pixel |= 0xFF000000;
-                    }
-                    image.setRGB(i, j, pixel);
-                }
-            }
+        return spritePixels;
+    }
 
-            return image;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+    private ItemDefinition getItemDefinitionForId(int itemId) {
+        ItemDefinition definition = itemLoader
+                .load(itemId, itemFiles.get(itemId).getContents());
+
+        if (definition.notedTemplate != -1) {
+            method3706(definition,
+                    getItemDefinitionForId(definition.notedTemplate),
+                    getItemDefinitionForId(definition.notedID));
         }
+
+        if (definition.boughtTemplateId != -1) {
+            method3763(definition,
+                    getItemDefinitionForId(definition.boughtTemplateId),
+                    getItemDefinitionForId(definition.boughtId));
+        }
+
+        if (definition.placeholderTemplateId != -1) {
+            method3704(definition,
+                    getItemDefinitionForId(definition.placeholderTemplateId),
+                    getItemDefinitionForId(definition.placeholderId));
+        }
+
+        return definition;
+    }
+
+    private static void method3706(ItemDefinition var0, ItemDefinition var1, ItemDefinition var2) {
+        var0.inventoryModel = var1.inventoryModel;
+        var0.zoom2d = var1.zoom2d;
+        var0.xan2d = var1.xan2d;
+        var0.yan2d = var1.yan2d;
+        var0.zan2d = var1.zan2d;
+        var0.xOffset2d = var1.xOffset2d;
+        var0.yOffset2d = var1.yOffset2d;
+        var0.colorFind = var1.colorFind;
+        var0.colorReplace = var1.colorReplace;
+        var0.textureFind = var1.textureFind;
+        var0.textureReplace = var1.textureReplace;
+        var0.name = var2.name;
+        var0.members = var2.members;
+        var0.cost = var2.cost;
+        var0.stackable = 1;
+    }
+
+    private static void method3763(ItemDefinition var0, ItemDefinition var1, ItemDefinition var2) {
+        var0.inventoryModel = var1.inventoryModel;
+        var0.zoom2d = var1.zoom2d;
+        var0.xan2d = var1.xan2d;
+        var0.yan2d = var1.yan2d;
+        var0.zan2d = var1.zan2d;
+        var0.xOffset2d = var1.xOffset2d;
+        var0.yOffset2d = var1.yOffset2d;
+        var0.colorFind = var2.colorFind;
+        var0.colorReplace = var2.colorReplace;
+        var0.textureFind = var2.textureFind;
+        var0.textureReplace = var2.textureReplace;
+        var0.name = var2.name;
+        var0.members = var2.members;
+        var0.stackable = var2.stackable;
+        var0.maleModel0 = var2.maleModel0;
+        var0.maleModel1 = var2.maleModel1;
+        var0.maleModel2 = var2.maleModel2;
+        var0.femaleModel0 = var2.femaleModel0;
+        var0.femaleModel1 = var2.femaleModel1;
+        var0.femaleModel2 = var2.femaleModel2;
+        var0.maleHeadModel = var2.maleHeadModel;
+        var0.maleHeadModel2 = var2.maleHeadModel2;
+        var0.femaleHeadModel = var2.femaleHeadModel;
+        var0.femaleHeadModel2 = var2.femaleHeadModel2;
+        var0.team = var2.team;
+        var0.options = var2.options;
+
+        var0.interfaceOptions = new String[5];
+        if(var2.interfaceOptions != null) {
+            System.arraycopy(var2.interfaceOptions, 0, var0.interfaceOptions, 0, 4);
+        }
+        var0.interfaceOptions[4] = "Discard";
+
+        var0.cost = 0;
+    }
+
+    private static void method3704(ItemDefinition var0, ItemDefinition var1, ItemDefinition var2) {
+        var0.inventoryModel = var1.inventoryModel;
+        var0.zoom2d = var1.zoom2d;
+        var0.xan2d = var1.xan2d;
+        var0.yan2d = var1.yan2d;
+        var0.zan2d = var1.zan2d;
+        var0.xOffset2d = var1.xOffset2d;
+        var0.yOffset2d = var1.yOffset2d;
+        var0.colorFind = var1.colorFind;
+        var0.colorReplace = var1.colorReplace;
+        var0.textureFind = var1.textureFind;
+        var0.textureReplace = var1.textureReplace;
+        var0.stackable = var1.stackable;
+        var0.name = var2.name;
+        var0.cost = 0;
+        var0.members = false;
+        var0.isTradeable = false;
+    }
+
+    private ModelData getModelDataForId(int modelId) {
+        net.runelite.cache.fs.File modelFile = modelIndex
+                .getArchive(modelId)
+                .getFiles()
+                .get(0);
+
+        return new ModelData(modelFile.getContents());
     }
 }
