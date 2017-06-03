@@ -51,15 +51,31 @@ public class OSTracker {
     public static final File SPRITE_DUMP_ROOT = new File(FILES_ROOT, "sprites");
 
     /**
-     * args[0] = source version [optional]
+     * -s 3144 = load cache version 3144
+     * -o = dump a file even if it has already been dumped
      */
     public static void main(String[] args) {
         try {
-            if (args.length > 0) {
-                putCacheInLiveStore(args[0]);
-            } else {
-                putCacheInLiveStore("" + CacheStoreUtil.getLatestCacheInFolder(CACHE_STORE_ROOT));
+            String sourceVersion = null;
+            boolean overwriteFiles = false;
+
+            for (int i = 0; i < args.length; i++) {
+                switch (args[i]) {
+                    case "-s":
+                        sourceVersion = args[i + 1];
+                        break;
+
+                    case "-o":
+                        overwriteFiles = true;
+                        break;
+                }
             }
+
+            if (sourceVersion == null) {
+                sourceVersion = "" + CacheStoreUtil.getLatestCacheInFolder(CACHE_STORE_ROOT);
+            }
+
+            putCacheInLiveStore(sourceVersion);
 
             Store cacheStore = new Store(LIVE_CACHE_STORE);
             cacheStore.load();
@@ -86,7 +102,7 @@ public class OSTracker {
             ItemDefinitionSerializer itemDefinitionSerializer = new ItemDefinitionSerializer(itemFileLoader);
 
             for (Integer itemId : itemFileLoader.getItemIds()) {
-                itemDefinitionSerializer.dump(itemId);
+                itemDefinitionSerializer.dump(itemId, overwriteFiles);
             }
 
             // Dump models
@@ -94,14 +110,14 @@ public class OSTracker {
             ModelConverter modelConverter = new ModelConverter(modelFileLoader);
 
             for (Integer modelId : modelFileLoader.getModelFiles().keySet()) {
-                modelConverter.convert(modelId);
+                modelConverter.convert(modelId, overwriteFiles);
             }
 
             // Dump sprites
             SpriteDumper spriteDumper = new SpriteDumper(modelFileLoader);
 
             for (Integer spriteId : modelFileLoader.getSpriteFiles().keySet()) {
-                spriteDumper.dump(spriteId);
+                spriteDumper.dump(spriteId, overwriteFiles);
             }
 
             int cacheVersion = CacheStoreUtil

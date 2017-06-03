@@ -111,21 +111,21 @@ public class ItemDefinitionSerializer {
         this.itemFiles = itemFileLoader.getItemFiles();
     }
 
-    public void dump(int itemId) {
+    public void dump(int itemId, boolean overwriteFiles) {
         File f = itemFiles.get(itemId);
         if (f == null) {
             throw new NullPointerException("A file for item " + itemId + " could not be found in the cache");
         }
 
-        java.io.File file = new java.io.File(OSTracker.ITEM_DUMP_ROOT,
+        java.io.File definitionFile = new java.io.File(OSTracker.ITEM_DUMP_ROOT,
                 itemId + "/def.json");
 
-        if (!file.exists()) {
-            file.getParentFile().mkdirs();
+        if (!definitionFile.exists() || overwriteFiles) {
+            definitionFile.getParentFile().mkdirs();
 
             ItemDefinition definition = itemLoader.load(itemId, f.getContents());
 
-            try (Writer writer = new FileWriter(file)) {
+            try (Writer writer = new FileWriter(definitionFile)) {
                 GSON.toJson(definition, writer);
             } catch (IOException e) {
                 e.printStackTrace();

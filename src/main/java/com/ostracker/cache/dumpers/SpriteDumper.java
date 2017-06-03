@@ -39,35 +39,37 @@ public class SpriteDumper {
         this.spriteFiles = modelFileLoader.getSpriteFiles();
     }
 
-    public void dump(int spriteId) {
-        File spriteFile = spriteFiles.get(spriteId);
-        if (spriteFile == null) {
+    public void dump(int spriteId, boolean overwriteFiles) {
+        File f = spriteFiles.get(spriteId);
+        if (f == null) {
             throw new NullPointerException("A file for sprite " + spriteId + " could not be found in the cache");
         }
 
         SpriteDefinition[] spriteDefinitions = spriteLoader
-                .load(spriteId, spriteFile.getContents());
+                .load(spriteId, f.getContents());
 
         for (SpriteDefinition definition : spriteDefinitions) {
             if (definition.getWidth() > 0
                     && definition.getHeight() > 0) {
 
-                java.io.File file = new java.io.File(OSTracker.SPRITE_DUMP_ROOT,
+                java.io.File frameFile = new java.io.File(OSTracker.SPRITE_DUMP_ROOT,
                         spriteId + "/" + definition.getFrame() + ".png");
 
-                file.getParentFile().mkdirs();
+                if (!frameFile.exists() || overwriteFiles) {
+                    frameFile.getParentFile().mkdirs();
 
-                BufferedImage bufferedImage = new BufferedImage(
-                        definition.getWidth(),
-                        definition.getHeight(),
-                        BufferedImage.TYPE_INT_ARGB);
+                    BufferedImage bufferedImage = new BufferedImage(
+                            definition.getWidth(),
+                            definition.getHeight(),
+                            BufferedImage.TYPE_INT_ARGB);
 
-                bufferedImage.setRGB(0, 0,
-                        definition.getWidth(), definition.getHeight(),
-                        definition.getPixels(),
-                        0, definition.getWidth());
+                    bufferedImage.setRGB(0, 0,
+                            definition.getWidth(), definition.getHeight(),
+                            definition.getPixels(),
+                            0, definition.getWidth());
 
-                FileUtil.writeImage(bufferedImage, "png", file);
+                    FileUtil.writeImage(bufferedImage, "png", frameFile);
+                }
             }
         }
     }

@@ -27,6 +27,8 @@ import net.runelite.cache.definitions.loaders.ModelLoader;
 import net.runelite.cache.definitions.loaders.TextureLoader;
 import net.runelite.cache.fs.File;
 import net.runelite.cache.models.VertexNormal;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.io.FileNotFoundException;
@@ -34,6 +36,8 @@ import java.io.PrintWriter;
 import java.util.Map;
 
 public class ModelConverter {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ModelConverter.class);
 
     private Map<Integer, File> modelFiles;
     private Map<Integer, File> textureFiles;
@@ -46,18 +50,23 @@ public class ModelConverter {
         this.textureFiles = modelFileLoader.getTextureFiles();
     }
 
-    public void convert(int modelId) {
-        File modelFile = modelFiles.get(modelId);
-        if (modelFile != null) {
-            byte[] modelBytes = modelFile.getContents();
+    public void convert(int modelId, boolean overwriteFiles) {
+        File f = modelFiles.get(modelId);
+        if (f == null) {
+            throw new NullPointerException("A file for model " + modelId + " could not be found in the cache");
+        }
+
+        java.io.File materialsFile = new java.io.File(OSTracker.MODEL_DUMP_ROOT, modelId + "/materials.mtl");
+        java.io.File modelFile = new java.io.File(OSTracker.MODEL_DUMP_ROOT, modelId + "/model.obj");
+
+        if (!materialsFile.exists() || !modelFile.exists() || overwriteFiles) {
+            materialsFile.getParentFile().mkdirs();
+
+            byte[] modelBytes = f.getContents();
 
             ModelDefinition definition = modelLoader.load(modelId, modelBytes);
             definition.computeNormals();
             definition.computeTextureUVCoordinates();
-
-            java.io.File materialsFile = new java.io.File(OSTracker.MODEL_DUMP_ROOT, modelId + "/materials.mtl");
-
-            materialsFile.getParentFile().mkdirs();
 
             try (PrintWriter writer = new PrintWriter(materialsFile)) {
                 for (int i = 0; i < definition.faceCount; i++) {
@@ -91,10 +100,16 @@ public class ModelConverter {
                     } else {
                         File textureFile = textureFiles.get((int) textureId);
 
-                        TextureDefinition textureDefinition = textureLoader
-                                .load(textureId, textureFile.getContents());
+                        if (textureFile != null) {
+                            TextureDefinition textureDefinition = textureLoader
+                                    .load(textureId, textureFile.getContents());
 
-                        writer.println("     map_Kd ../../sprites/" + textureDefinition.getFileIds()[0] + "/0.png");
+                            writer.println("     map_Kd ../../sprites/" + textureDefinition.getFileIds()[0] + "/0.png");
+                        } else {
+                            LOGGER.error("Model " + modelId +
+                                    " was not dumped, because texture " + textureId + " was missing");
+                            return;
+                        }
                     }
 
                     int alpha = 0;
@@ -111,7 +126,7 @@ public class ModelConverter {
                 e.printStackTrace();
             }
 
-            try (PrintWriter writer = new PrintWriter(new java.io.File(OSTracker.MODEL_DUMP_ROOT, modelId + "/model.obj"))) {
+            try (PrintWriter writer = new PrintWriter(modelFile)) {
                 writer.println("mtllib materials.mtl");
 
                 for (int i = 0; i < definition.vertexCount; i++) {
