@@ -24,11 +24,12 @@ import com.ostracker.rs.*;
 import net.runelite.cache.IndexType;
 import net.runelite.cache.definitions.ItemDefinition;
 import net.runelite.cache.definitions.loaders.ItemLoader;
+import net.runelite.cache.fs.File;
 import net.runelite.cache.fs.Index;
 import net.runelite.cache.fs.Store;
 
 import java.awt.image.BufferedImage;
-import java.util.List;
+import java.util.Map;
 
 public class ItemRasterizer {
 
@@ -37,7 +38,7 @@ public class ItemRasterizer {
 
     private static final double BRIGHTNESS_LEVEL = 0.6D;
 
-    private List<net.runelite.cache.fs.File> itemFiles;
+    private Map<Integer, File> itemFiles;
     private Index modelIndex;
 
     private ItemLoader itemLoader = new ItemLoader();

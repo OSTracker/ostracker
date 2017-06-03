@@ -39,6 +39,7 @@ public class ModelFileLoader {
         for (Archive archive : store
                 .getIndex(IndexType.MODELS)
                 .getArchives()) {
+
             this.modelFiles.put(archive.getArchiveId(),
                     archive.getFiles().get(0));
         }
@@ -53,6 +54,7 @@ public class ModelFileLoader {
         for (Archive archive : store
                 .getIndex(IndexType.SPRITES)
                 .getArchives()) {
+
             this.spriteFiles.put(archive.getArchiveId(),
                     archive.getFiles().get(0));
         }

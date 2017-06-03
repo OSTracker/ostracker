@@ -26,27 +26,30 @@ import net.runelite.cache.fs.File;
 import net.runelite.cache.fs.Index;
 import net.runelite.cache.fs.Store;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 public class ItemFileLoader {
 
-    private List<File> itemFiles;
+    private Map<Integer, File> itemFiles;
 
     public ItemFileLoader(Store store) {
         Index configIndex = store.getIndex(IndexType.CONFIGS);
-        Archive itemArchive = configIndex.getArchive(ConfigType.ITEM.getId());
-        this.itemFiles = itemArchive.getFiles();
+        Archive npcArchive = configIndex.getArchive(ConfigType.NPC.getId());
+
+        this.itemFiles = new HashMap<>();
+
+        for (File file : npcArchive.getFiles()) {
+            this.itemFiles.put(file.getFileId(), file);
+        }
     }
 
-    public List<File> getItemFiles() {
+    public Map<Integer, File> getItemFiles() {
         return itemFiles;
     }
 
-    public List<Integer> getItemIds() {
-        return itemFiles
-                .stream()
-                .map(File::getFileId)
-                .collect(Collectors.toList());
+    public Set<Integer> getItemIds() {
+        return itemFiles.keySet();
     }
 }
