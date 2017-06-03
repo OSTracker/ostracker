@@ -36,11 +36,11 @@ public class ItemFileLoader {
 
     public ItemFileLoader(Store store) {
         Index configIndex = store.getIndex(IndexType.CONFIGS);
-        Archive npcArchive = configIndex.getArchive(ConfigType.NPC.getId());
+        Archive itemArchive = configIndex.getArchive(ConfigType.ITEM.getId());
 
         this.itemFiles = new HashMap<>();
 
-        for (File file : npcArchive.getFiles()) {
+        for (File file : itemArchive.getFiles()) {
             this.itemFiles.put(file.getFileId(), file);
         }
     }
