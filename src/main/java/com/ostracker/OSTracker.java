@@ -22,9 +22,11 @@ package com.ostracker;
 import com.ostracker.cache.RemoteCache;
 import com.ostracker.cache.dumpers.ItemDefinitionSerializer;
 import com.ostracker.cache.dumpers.ModelConverter;
+import com.ostracker.cache.dumpers.NpcDefinitionSerializer;
 import com.ostracker.cache.dumpers.SpriteDumper;
 import com.ostracker.cache.loaders.ItemFileLoader;
 import com.ostracker.cache.loaders.ModelFileLoader;
+import com.ostracker.cache.loaders.NpcFileLoader;
 import com.ostracker.util.CacheStoreUtil;
 import com.ostracker.util.FileUtil;
 import com.ostracker.util.GameConnectionUtil;
@@ -47,6 +49,7 @@ public class OSTracker {
 
     public static final File FILES_ROOT = new File("files");
     public static final File ITEM_DUMP_ROOT = new File(FILES_ROOT, "items");
+    public static final File NPC_DUMP_ROOT = new File(FILES_ROOT, "npcs");
     public static final File MODEL_DUMP_ROOT = new File(FILES_ROOT, "models");
     public static final File SPRITE_DUMP_ROOT = new File(FILES_ROOT, "sprites");
 
@@ -103,6 +106,14 @@ public class OSTracker {
 
             for (Integer itemId : itemFileLoader.getItemIds()) {
                 itemDefinitionSerializer.dump(itemId, overwriteFiles);
+            }
+
+            // Dump NPC definitions
+            NpcFileLoader npcFileLoader = new NpcFileLoader(cacheStore);
+            NpcDefinitionSerializer npcDefinitionSerializer = new NpcDefinitionSerializer(npcFileLoader);
+
+            for (Integer npcId : npcFileLoader.getNpcIds()) {
+                npcDefinitionSerializer.dump(npcId, overwriteFiles);
             }
 
             // Dump models
