@@ -19,14 +19,12 @@
 
 package com.ostracker;
 
-import com.google.gson.*;
 import com.ostracker.cache.RemoteCache;
+import com.ostracker.cache.dumpers.ItemDefinitionSerializer;
+import com.ostracker.cache.dumpers.ModelConverter;
 import com.ostracker.cache.dumpers.SpriteDumper;
 import com.ostracker.cache.loaders.ItemFileLoader;
 import com.ostracker.cache.loaders.ModelFileLoader;
-import com.ostracker.cache.tracker.ItemDefinitionTracker;
-import com.ostracker.cache.tracker.ModelDefinitionTracker;
-import com.ostracker.cache.tracker.StoreFileTracker;
 import com.ostracker.util.CacheStoreUtil;
 import com.ostracker.util.FileUtil;
 import com.ostracker.util.GameConnectionUtil;
@@ -34,10 +32,8 @@ import net.runelite.cache.fs.Store;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.File;
+import java.io.IOException;
 
 public class OSTracker {
 
@@ -49,34 +45,18 @@ public class OSTracker {
      */
     public static final File LIVE_CACHE_STORE = new File(CACHE_STORE_ROOT, "LIVE");
 
-    public static final File WEB_ROOT = new File("web");
-    public static final File CHANGES_ROOT = new File(WEB_ROOT,"changes");
-    public static final File ITEM_DUMP_ROOT = new File(WEB_ROOT, "items");
-    public static final File MODEL_DUMP_ROOT = new File(WEB_ROOT, "models");
-    public static final File SPRITE_DUMP_ROOT = new File(WEB_ROOT, "sprites");
-
-    public static final File VERSIONS_FILE = new File(CHANGES_ROOT, "versions.json");
-
-    public static final Gson GSON = new GsonBuilder()
-            .setPrettyPrinting()
-            .create();
+    public static final File FILES_ROOT = new File("files");
+    public static final File ITEM_DUMP_ROOT = new File(FILES_ROOT, "items");
+    public static final File MODEL_DUMP_ROOT = new File(FILES_ROOT, "models");
+    public static final File SPRITE_DUMP_ROOT = new File(FILES_ROOT, "sprites");
 
     /**
-     * args[0] = source version [optional], if not provided, latest is compared to remote
-     * args[1] = target version [optional], if not provided, source is compared to remote
+     * args[0] = source version [optional]
      */
     public static void main(String[] args) {
         try {
-            File targetStore = null;
-
             if (args.length > 0) {
                 putCacheInLiveStore(args[0]);
-
-                if (args.length > 1) {
-                    LOGGER.info("Target cache store is " + args[1]);
-
-                    targetStore = new File(CACHE_STORE_ROOT, args[1]);
-                }
             } else {
                 putCacheInLiveStore("" + CacheStoreUtil.getLatestCacheInFolder(CACHE_STORE_ROOT));
             }
@@ -84,48 +64,38 @@ public class OSTracker {
             Store cacheStore = new Store(LIVE_CACHE_STORE);
             cacheStore.load();
 
-            StoreFileTracker fileTracker = new StoreFileTracker();
-            fileTracker.load(cacheStore);
-
             String worldHost = GameConnectionUtil
                     .getBestWorldHost();
 
-            if (targetStore == null) {
-                RemoteCache remoteCache = new RemoteCache();
+            RemoteCache remoteCache = new RemoteCache();
 
-                remoteCache.connect(worldHost, GameConnectionUtil.GAME_PORT);
-                remoteCache.shakeHands(GameConnectionUtil.getRevision(worldHost));
-                remoteCache.download(cacheStore);
-                remoteCache.close();
+            remoteCache.connect(worldHost, GameConnectionUtil.GAME_PORT);
+            remoteCache.shakeHands(GameConnectionUtil.getRevision(worldHost));
+            remoteCache.download(cacheStore);
+            remoteCache.close();
 
-                cacheStore.save();
-            }
-
+            cacheStore.save();
             cacheStore.close();
 
             // Reload cache to update file contents
-            cacheStore = new Store(targetStore != null ? targetStore : LIVE_CACHE_STORE);
+            cacheStore = new Store(LIVE_CACHE_STORE);
             cacheStore.load();
 
-            int cacheVersion = CacheStoreUtil
-                    .getCacheVersion(cacheStore);
-
-            StoreFileTracker newFileTracker = new StoreFileTracker();
-            newFileTracker.load(cacheStore);
-
-            Map<String, JsonObject> changeLogParts = new HashMap<>();
-
-            // Dump item definitions for items that have changed
+            // Dump item definitions
             ItemFileLoader itemFileLoader = new ItemFileLoader(cacheStore);
+            ItemDefinitionSerializer itemDefinitionSerializer = new ItemDefinitionSerializer(itemFileLoader);
 
-            ItemDefinitionTracker itemDefinitionTracker = new ItemDefinitionTracker(itemFileLoader);
-            changeLogParts.put("items", itemDefinitionTracker.run(fileTracker, newFileTracker));
+            for (Integer itemId : itemFileLoader.getItemIds()) {
+                itemDefinitionSerializer.dump(itemId);
+            }
 
-            // Dump models that have changed
+            // Dump models
             ModelFileLoader modelFileLoader = new ModelFileLoader(cacheStore);
+            ModelConverter modelConverter = new ModelConverter(modelFileLoader);
 
-            ModelDefinitionTracker modelDefinitionTracker = new ModelDefinitionTracker(modelFileLoader);
-            changeLogParts.put("models", modelDefinitionTracker.run(fileTracker, newFileTracker));
+            for (Integer modelId : modelFileLoader.getModelFiles().keySet()) {
+                modelConverter.convert(modelId);
+            }
 
             // Dump sprites
             SpriteDumper spriteDumper = new SpriteDumper(modelFileLoader);
@@ -134,63 +104,13 @@ public class OSTracker {
                 spriteDumper.dump(spriteId);
             }
 
-            dumpVersionFile(cacheVersion, changeLogParts);
-            updateVersionsFile(cacheVersion);
+            int cacheVersion = CacheStoreUtil
+                    .getCacheVersion(cacheStore);
 
             cacheStore.close();
 
             putLiveCacheInCacheStore(cacheVersion);
         } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static void dumpVersionFile(int cacheVersion,
-                                        Map<String, JsonObject> changeLogParts) {
-
-        JsonObject root = new JsonObject();
-
-        changeLogParts.forEach(root::add);
-
-        CHANGES_ROOT.mkdirs();
-
-        try (Writer writer = new FileWriter(new File(CHANGES_ROOT, cacheVersion + ".json"))) {
-            writer.write(GSON.toJson(root));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static void updateVersionsFile(int cacheVersion) throws FileNotFoundException {
-        JsonArray versions;
-
-        if (VERSIONS_FILE.exists()) {
-            versions = new JsonParser()
-                    .parse(new FileReader(VERSIONS_FILE))
-                    .getAsJsonArray();
-        } else {
-            versions = new JsonArray();
-        }
-
-        for (JsonElement version : versions) {
-            if (version
-                    .getAsJsonObject()
-                    .getAsJsonPrimitive("version")
-                    .getAsInt() == cacheVersion) {
-                return;
-            }
-        }
-
-        JsonObject version = new JsonObject();
-
-        version.addProperty("version", cacheVersion);
-        version.addProperty("time", new Date().getTime() / 1000);
-
-        versions.add(version);
-
-        try (Writer writer = new FileWriter(VERSIONS_FILE)) {
-            writer.write(GSON.toJson(versions));
-        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -201,6 +121,7 @@ public class OSTracker {
 
         if (liveCacheStoreFiles != null
                 && liveCacheStoreFiles.length > 0) {
+
             for (File f : liveCacheStoreFiles) {
                 f.delete();
             }
