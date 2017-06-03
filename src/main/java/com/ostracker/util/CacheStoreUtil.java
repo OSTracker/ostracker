@@ -22,8 +22,6 @@ package com.ostracker.util;
 import net.runelite.cache.fs.Index;
 import net.runelite.cache.fs.Store;
 
-import java.io.File;
-
 public class CacheStoreUtil {
 
     public static int getCacheVersion(Store store) {
@@ -34,34 +32,5 @@ public class CacheStoreUtil {
         }
 
         return revision;
-    }
-
-    public static int getLatestCacheInFolder(File folder) {
-        File[] caches = folder.listFiles();
-
-        int latestVersion = -1;
-
-        if (caches != null
-                && caches.length > 0) {
-
-            for (File f : caches) {
-                if (f.isDirectory()) {
-                    try {
-                        int version = Integer.parseInt(f.getName());
-
-                        if (version > latestVersion) {
-                            latestVersion = version;
-                        }
-                    } catch (NumberFormatException ignored) {
-                    }
-                }
-            }
-        }
-
-        if (latestVersion == -1) {
-            throw new IllegalStateException("There doesn't seem to be any numbered folders in that folder");
-        }
-
-        return latestVersion;
     }
 }

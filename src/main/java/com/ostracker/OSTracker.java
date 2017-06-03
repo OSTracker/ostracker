@@ -54,7 +54,9 @@ public class OSTracker {
     public static final File SPRITE_DUMP_ROOT = new File(FILES_ROOT, "sprites");
 
     /**
-     * -s 3144 = load cache version 3144
+     * -s [version] = load a cache from the cache store.
+     * If this argument isn't provided, it loads it from user.home/jagexcache/oldschool/LIVE
+     *
      * -o = dump a file even if it has already been dumped
      */
     public static void main(String[] args) {
@@ -75,10 +77,10 @@ public class OSTracker {
             }
 
             if (sourceVersion == null) {
-                sourceVersion = "" + CacheStoreUtil.getLatestCacheInFolder(CACHE_STORE_ROOT);
+                putHomeCacheInLiveStore();
+            } else {
+                putCacheInLiveStore(sourceVersion);
             }
-
-            putCacheInLiveStore(sourceVersion);
 
             Store cacheStore = new Store(LIVE_CACHE_STORE);
             cacheStore.load();
@@ -142,6 +144,33 @@ public class OSTracker {
         }
     }
 
+    private static void putHomeCacheInLiveStore() throws IOException {
+        // Clean live cache store
+        File[] liveCacheStoreFiles = LIVE_CACHE_STORE.listFiles();
+
+        if (liveCacheStoreFiles != null
+                && liveCacheStoreFiles.length > 0) {
+
+            for (File f : liveCacheStoreFiles) {
+                f.delete();
+            }
+        }
+
+        File userHomeCache = new File(System.getProperty("user.home") + "/jagexcache/oldschool/LIVE");
+
+        if (userHomeCache.exists()) {
+            File[] cacheFiles = userHomeCache.listFiles();
+
+            if (cacheFiles != null) {
+                LOGGER.info("Putting " + userHomeCache + " cache in live store");
+
+                FileUtil.copyFiles(cacheFiles, LIVE_CACHE_STORE);
+            }
+        } else {
+            throw new IllegalStateException("Cache missing from " + userHomeCache + ". Please run the OSRS client.");
+        }
+    }
+
     private static void putCacheInLiveStore(String version) throws IOException {
         // Clean live cache store
         File[] liveCacheStoreFiles = LIVE_CACHE_STORE.listFiles();
@@ -154,12 +183,18 @@ public class OSTracker {
             }
         }
 
-        File[] cacheStoreFiles = new File(CACHE_STORE_ROOT, version).listFiles();
+        File cacheStoreCache = new File(CACHE_STORE_ROOT, version);
 
-        if (cacheStoreFiles != null) {
-            LOGGER.info("Putting cache " + version + " in live store");
+        if (cacheStoreCache.exists()) {
+            File[] cacheStoreFiles = cacheStoreCache.listFiles();
 
-            FileUtil.copyFiles(cacheStoreFiles, LIVE_CACHE_STORE);
+            if (cacheStoreFiles != null) {
+                LOGGER.info("Putting cache " + version + " in live store");
+
+                FileUtil.copyFiles(cacheStoreFiles, LIVE_CACHE_STORE);
+            }
+        } else {
+            throw new IllegalStateException("Cache missing from " + cacheStoreCache);
         }
     }
 
