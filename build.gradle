@@ -12,7 +12,7 @@ repositories {
 }
 
 dependencies {
-    compile group: 'net.runelite', name: 'cache', version: '1.1.26-SNAPSHOT'
+    compile group: 'net.runelite', name: 'cache', version: '1.1.28-SNAPSHOT'
 
     testCompile group: 'junit', name: 'junit', version: '4.11'
 }
