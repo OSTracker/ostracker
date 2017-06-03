@@ -28,6 +28,8 @@ import com.ostracker.cache.loaders.ItemFileLoader;
 import net.runelite.cache.definitions.ItemDefinition;
 import net.runelite.cache.definitions.loaders.ItemLoader;
 import net.runelite.cache.fs.File;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -38,6 +40,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class ItemDefinitionSerializer {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ItemDefinitionSerializer.class);
 
     private static Gson GSON;
 
@@ -127,6 +131,8 @@ public class ItemDefinitionSerializer {
             definitionFile.getParentFile().mkdirs();
 
             ItemDefinition definition = itemLoader.load(itemId, f.getContents());
+
+            LOGGER.info("Dumping " + definitionFile);
 
             try (Writer writer = new FileWriter(definitionFile)) {
                 GSON.toJson(definition, writer);

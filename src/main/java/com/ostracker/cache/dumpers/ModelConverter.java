@@ -68,6 +68,8 @@ public class ModelConverter {
             definition.computeNormals();
             definition.computeTextureUVCoordinates();
 
+            LOGGER.info("Dumping " + materialsFile);
+
             try (PrintWriter writer = new PrintWriter(materialsFile)) {
                 for (int i = 0; i < definition.faceCount; i++) {
                     short textureId = -1;
@@ -125,6 +127,8 @@ public class ModelConverter {
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
+
+            LOGGER.info("Dumping " + modelFile);
 
             try (PrintWriter writer = new PrintWriter(modelFile)) {
                 writer.println("mtllib materials.mtl");

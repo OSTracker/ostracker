@@ -25,11 +25,15 @@ import com.ostracker.util.FileUtil;
 import net.runelite.cache.definitions.SpriteDefinition;
 import net.runelite.cache.definitions.loaders.SpriteLoader;
 import net.runelite.cache.fs.File;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.image.BufferedImage;
 import java.util.Map;
 
 public class SpriteDumper {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SpriteDumper.class);
 
     private Map<Integer, File> spriteFiles;
 
@@ -67,6 +71,8 @@ public class SpriteDumper {
                             definition.getWidth(), definition.getHeight(),
                             definition.getPixels(),
                             0, definition.getWidth());
+
+                    LOGGER.info("Dumping " + frameFile);
 
                     FileUtil.writeImage(bufferedImage, "png", frameFile);
                 }

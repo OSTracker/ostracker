@@ -28,6 +28,8 @@ import com.ostracker.cache.loaders.NpcFileLoader;
 import net.runelite.cache.definitions.NpcDefinition;
 import net.runelite.cache.definitions.loaders.NpcLoader;
 import net.runelite.cache.fs.File;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -38,6 +40,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class NpcDefinitionSerializer {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(NpcDefinitionSerializer.class);
 
     private static Gson GSON;
 
@@ -108,6 +112,8 @@ public class NpcDefinitionSerializer {
             definitionFile.getParentFile().mkdirs();
 
             NpcDefinition definition = npcLoader.load(npcId, f.getContents());
+
+            LOGGER.info("Dumping " + definitionFile);
 
             try (Writer writer = new FileWriter(definitionFile)) {
                 GSON.toJson(definition, writer);
