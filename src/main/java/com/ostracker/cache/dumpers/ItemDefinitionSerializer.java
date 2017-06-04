@@ -65,6 +65,7 @@ public class ItemDefinitionSerializer {
         fieldNameMappings.put("femaleModel0", "femaleModel");
         fieldNameMappings.put("femaleModel1", "femaleModel2");
         fieldNameMappings.put("femaleModel2", "femaleModel3");
+        fieldNameMappings.put("params", "parameters");
 
         Set<String> fieldsToSerialize = new HashSet<>();
         fieldsToSerialize.addAll(fieldNameMappings.keySet());
@@ -78,12 +79,16 @@ public class ItemDefinitionSerializer {
         fieldsToSerialize.add("yan2d");
         fieldsToSerialize.add("zan2d");
         fieldsToSerialize.add("zoom2d");
+        fieldsToSerialize.add("resizeX");
+        fieldsToSerialize.add("resizeY");
+        fieldsToSerialize.add("resizeZ");
         fieldsToSerialize.add("maleOffset");
         fieldsToSerialize.add("femaleOffset");
         fieldsToSerialize.add("maleHeadModel");
         fieldsToSerialize.add("maleHeadModel2");
         fieldsToSerialize.add("femaleHeadModel");
         fieldsToSerialize.add("femaleHeadModel2");
+        fieldsToSerialize.add("shiftClickDropIndex");
 
         GSON = new GsonBuilder()
                 .setPrettyPrinting()

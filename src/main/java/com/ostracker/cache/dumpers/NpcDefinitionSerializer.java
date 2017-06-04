@@ -53,6 +53,7 @@ public class NpcDefinitionSerializer {
         fieldNameMappings.put("retextureToFind", "textureToReplace");
         fieldNameMappings.put("retextureToReplace", "textureToReplaceWith");
         fieldNameMappings.put("options", "sceneOptions");
+        fieldNameMappings.put("params", "parameters");
 
         Set<String> fieldsToSerialize = new HashSet<>();
         fieldsToSerialize.addAll(fieldNameMappings.keySet());
@@ -65,6 +66,14 @@ public class NpcDefinitionSerializer {
         fieldsToSerialize.add("rotate90LeftAnimation");
         fieldsToSerialize.add("rotate180Animation");
         fieldsToSerialize.add("combatLevel");
+        fieldsToSerialize.add("resizeX");
+        fieldsToSerialize.add("resizeY");
+        fieldsToSerialize.add("contrast");
+        fieldsToSerialize.add("ambient");
+        fieldsToSerialize.add("renderOnMinimap");
+        fieldsToSerialize.add("isClickable");
+        fieldsToSerialize.add("hasRenderPriority");
+        fieldsToSerialize.add("headIcon");
 
         GSON = new GsonBuilder()
                 .setPrettyPrinting()
