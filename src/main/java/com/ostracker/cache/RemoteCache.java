@@ -129,21 +129,7 @@ public class RemoteCache {
 
         for (int i = 0; i < indexCount; i++) {
             int crc = buffer.readInt();
-            int revision = buffer.readInt();
-
-            Index index = store.findIndex(i);
-
-            if (index == null) {
-                LOGGER.info("Index " + i + " does not exist locally, downloading..");
-            } else if (index.getRevision() != revision) {
-                LOGGER.info(MessageFormat.format("Index {0} has the wrong revision (local: {1}, remote: {2})",
-                        i,
-                        index.getRevision(),
-                        revision));
-            } else {
-                LOGGER.info("Index " + i + " is up to date");
-                continue;
-            }
+            buffer.readInt(); // index revision
 
             LOGGER.info("Downloading index " + i);
 
@@ -157,6 +143,8 @@ public class RemoteCache {
             }
 
             Index oldIndex = null;
+
+            Index index = store.findIndex(i);
 
             if (index != null) {
                 store.removeIndex(index);
