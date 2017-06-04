@@ -19,6 +19,7 @@
 
 package com.ostracker;
 
+import com.google.common.base.Stopwatch;
 import com.ostracker.cache.RemoteCache;
 import com.ostracker.cache.dumpers.ItemDefinitionSerializer;
 import com.ostracker.cache.dumpers.ModelConverter;
@@ -36,6 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class OSTracker {
 
@@ -62,7 +64,7 @@ public class OSTracker {
     public static void main(String[] args) {
         try {
             String sourceVersion = null;
-            boolean overwriteFiles = false;
+            AtomicBoolean overwriteFiles = new AtomicBoolean();
 
             for (int i = 0; i < args.length; i++) {
                 switch (args[i]) {
@@ -71,7 +73,7 @@ public class OSTracker {
                         break;
 
                     case "-o":
-                        overwriteFiles = true;
+                        overwriteFiles.set(true);
                         break;
                 }
             }
@@ -106,32 +108,59 @@ public class OSTracker {
             ItemFileLoader itemFileLoader = new ItemFileLoader(cacheStore);
             ItemDefinitionSerializer itemDefinitionSerializer = new ItemDefinitionSerializer(itemFileLoader);
 
-            for (Integer itemId : itemFileLoader.getItemIds()) {
-                itemDefinitionSerializer.dump(itemId, overwriteFiles);
-            }
+            Stopwatch itemDefinitionStopwatch = Stopwatch.createStarted();
+
+            itemFileLoader
+                    .getItemIds()
+                    .parallelStream()
+                    .forEach(itemId -> itemDefinitionSerializer.dump(itemId, overwriteFiles.get()));
+
+            itemDefinitionStopwatch.stop();
 
             // Dump NPC definitions
             NpcFileLoader npcFileLoader = new NpcFileLoader(cacheStore);
             NpcDefinitionSerializer npcDefinitionSerializer = new NpcDefinitionSerializer(npcFileLoader);
 
-            for (Integer npcId : npcFileLoader.getNpcIds()) {
-                npcDefinitionSerializer.dump(npcId, overwriteFiles);
-            }
+            Stopwatch npcDefinitionStopwatch = Stopwatch.createStarted();
+
+            npcFileLoader
+                    .getNpcIds()
+                    .parallelStream()
+                    .forEach(npcId -> npcDefinitionSerializer.dump(npcId, overwriteFiles.get()));
+
+            npcDefinitionStopwatch.stop();
 
             // Dump models
             ModelFileLoader modelFileLoader = new ModelFileLoader(cacheStore);
             ModelConverter modelConverter = new ModelConverter(modelFileLoader);
 
-            for (Integer modelId : modelFileLoader.getModelFiles().keySet()) {
-                modelConverter.convert(modelId, overwriteFiles);
-            }
+            Stopwatch modelStopwatch = Stopwatch.createStarted();
+
+            modelFileLoader
+                    .getModelFiles()
+                    .keySet()
+                    .parallelStream()
+                    .forEach(modelId -> modelConverter.convert(modelId, overwriteFiles.get()));
+
+            modelStopwatch.stop();
 
             // Dump sprites
             SpriteDumper spriteDumper = new SpriteDumper(modelFileLoader);
 
-            for (Integer spriteId : modelFileLoader.getSpriteFiles().keySet()) {
-                spriteDumper.dump(spriteId, overwriteFiles);
-            }
+            Stopwatch spriteStopwatch = Stopwatch.createStarted();
+
+            modelFileLoader
+                    .getSpriteFiles()
+                    .keySet()
+                    .parallelStream()
+                    .forEach(spriteId -> spriteDumper.dump(spriteId, overwriteFiles.get()));
+
+            spriteStopwatch.stop();
+
+            LOGGER.info("Spent " + itemDefinitionStopwatch + " dumping item definitions");
+            LOGGER.info("Spent " + npcDefinitionStopwatch + " dumping npc definitions");
+            LOGGER.info("Spent " + modelStopwatch + " dumping models");
+            LOGGER.info("Spent " + spriteStopwatch + " dumping sprites");
 
             int cacheVersion = CacheStoreUtil
                     .getCacheVersion(cacheStore);
