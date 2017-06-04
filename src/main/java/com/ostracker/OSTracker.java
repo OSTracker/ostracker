@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class OSTracker {
@@ -57,7 +58,8 @@ public class OSTracker {
 
     /**
      * -s [version] = load a cache from the cache store.
-     * If this argument isn't provided, it loads it from user.home/jagexcache/oldschool/LIVE
+     * If this argument isn't provided, it either loads the latest cache in
+     * the cachestore or loads it from user.home/jagexcache/oldschool/LIVE
      *
      * -o = dump a file even if it has already been dumped
      */
@@ -79,7 +81,14 @@ public class OSTracker {
             }
 
             if (sourceVersion == null) {
-                putHomeCacheInLiveStore();
+                Optional<Integer> latestCache = CacheStoreUtil
+                        .getLatestCacheInFolder(CACHE_STORE_ROOT);
+
+                if (latestCache.isPresent()) {
+                    putCacheInLiveStore("" + latestCache.get());
+                } else {
+                    putHomeCacheInLiveStore();
+                }
             } else {
                 putCacheInLiveStore(sourceVersion);
             }
