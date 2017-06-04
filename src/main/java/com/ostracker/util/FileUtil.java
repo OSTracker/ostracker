@@ -44,7 +44,7 @@ public class FileUtil {
             try {
                 ImageIO.write(image, fileFormat, file);
                 break;
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         } while (timesAttempted++ < TIMES_TO_ATTEMPT_WRITING_IMAGE);
