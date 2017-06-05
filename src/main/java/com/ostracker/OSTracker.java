@@ -21,13 +21,11 @@ package com.ostracker;
 
 import com.google.common.base.Stopwatch;
 import com.ostracker.cache.RemoteCache;
-import com.ostracker.cache.dumpers.ItemDefinitionSerializer;
-import com.ostracker.cache.dumpers.ModelConverter;
-import com.ostracker.cache.dumpers.NpcDefinitionSerializer;
-import com.ostracker.cache.dumpers.SpriteDumper;
+import com.ostracker.cache.dumpers.*;
 import com.ostracker.cache.loaders.ItemFileLoader;
 import com.ostracker.cache.loaders.ModelFileLoader;
 import com.ostracker.cache.loaders.NpcFileLoader;
+import com.ostracker.cache.loaders.TrackFileLoader;
 import com.ostracker.util.CacheStoreUtil;
 import com.ostracker.util.FileUtil;
 import com.ostracker.util.GameConnectionUtil;
@@ -55,6 +53,8 @@ public class OSTracker {
     public static final File NPC_DUMP_ROOT = new File(FILES_ROOT, "npcs");
     public static final File MODEL_DUMP_ROOT = new File(FILES_ROOT, "models");
     public static final File SPRITE_DUMP_ROOT = new File(FILES_ROOT, "sprites");
+    public static final File TRACKS1_DUMP_ROOT = new File(FILES_ROOT, "tracks1");
+    public static final File TRACKS2_DUMP_ROOT = new File(FILES_ROOT, "tracks2");
 
     /**
      * -s [version] = load a cache from the cache store.
@@ -166,10 +166,31 @@ public class OSTracker {
 
             spriteStopwatch.stop();
 
+            // Dump tracks
+            TrackFileLoader trackFileLoader = new TrackFileLoader(cacheStore);
+            TrackDumper trackDumper = new TrackDumper(trackFileLoader);
+
+            Stopwatch trackStopwatch = Stopwatch.createStarted();
+
+            trackFileLoader
+                    .getTrack1Files()
+                    .keySet()
+                    .parallelStream()
+                    .forEach(trackHash -> trackDumper.dump(trackHash, true, overwriteFiles.get()));
+
+            trackFileLoader
+                    .getTrack2Files()
+                    .keySet()
+                    .parallelStream()
+                    .forEach(trackHash -> trackDumper.dump(trackHash, false, overwriteFiles.get()));
+
+            trackStopwatch.stop();
+
             LOGGER.info("Spent " + itemDefinitionStopwatch + " dumping item definitions");
             LOGGER.info("Spent " + npcDefinitionStopwatch + " dumping npc definitions");
             LOGGER.info("Spent " + modelStopwatch + " dumping models");
             LOGGER.info("Spent " + spriteStopwatch + " dumping sprites");
+            LOGGER.info("Spent " + trackStopwatch + " dumping tracks");
 
             int cacheVersion = CacheStoreUtil
                     .getCacheVersion(cacheStore);
