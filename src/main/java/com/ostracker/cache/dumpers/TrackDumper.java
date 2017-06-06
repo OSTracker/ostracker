@@ -53,7 +53,7 @@ public class TrackDumper {
         }
 
         java.io.File trackFile = new java.io.File(isTracks1 ? OSTracker.TRACKS1_DUMP_ROOT : OSTracker.TRACKS2_DUMP_ROOT,
-                trackId + ".mid");
+                trackId + "-" + f.getArchive().getNameHash() + ".mid");
 
         if (!trackFile.exists() || overwriteFiles) {
             trackFile.getParentFile().mkdirs();
